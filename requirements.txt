@@ -1,9 +1,9 @@
-torch==2.7.1
-transformers==4.55.2
-triton==3.3.1
-flash_attn==2.7.3
-flash-linear-attention==0.1
-vllm==0.10.0
+torch>=2.0.0
+transformers>=4.35.0
+# triton==3.3.1  # Optional - not available in current environment
+# flash_attn==2.7.3  # Optional - not available in current environment
+# flash-linear-attention==0.1  # Optional - not available in current environment
+# vllm==0.10.0  # Optional - not available in current environment
 scipy
 pyyaml
 decorator
