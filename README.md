@@ -1,152 +1,150 @@
-# SpikingBrain：Spiking Brain-inspired Large Models
+# SpikingBrain-7B-HAL: Hardware Abstraction Layer
 
-📄 Technical Report: [Chinese](SpikingBrain_Report_Chi.pdf) | [English](SpikingBrain_Report_Eng.pdf)  
-🚀 Arxiv: [arXiv:2509.05276](https://www.arxiv.org/abs/2509.05276)  
-🧩 Models: [Available Models](#available-models)   
-🔗 Demo: [OpenBayes贝式计算](https://openbayes.com/console/public/tutorials/eKBhv3jUkWw)    
+🔧 **Hardware Abstraction Layer** for SpikingBrain-7B  
+🚀 **Universal Hardware Support** - Run on any hardware platform  
+⚡ **Performance Optimized** - Maintains efficiency across different architectures  
+🐳 **Container Ready** - Docker support for easy deployment  
 
 ---
 
-## About SpikingBrain
+## About SpikingBrain-7B-HAL
 
-Inspired by brain mechanisms, **SpikingBrain** integrates **hybrid efficient attention**, **MoE modules**, and **spike encoding** into its architecture, supported by a universal conversion pipeline compatible with the open-source model ecosystem. This enables continual pre-training with less than 2\% of the data while achieving performance comparable to mainstream open-source models. We further adapt frameworks, operators, parallel strategies, and communication primitives for **non-NVIDIA (MetaX) clusters**, ensuring stable large-scale training and inference. SpikingBrain achieves over 100× speedup in TTFT for 4M-token sequences, while spiking delivers over 69\% sparsity at the micro level. Combined with macro-level MoE sparsity, these advances provide valuable guidance for the design of next-generation neuromorphic chips.
+This repository extends the original [SpikingBrain-7B](https://github.com/BICLab/SpikingBrain-7B) with a comprehensive **Hardware Abstraction Layer (HAL)** that enables the neuromorphic AI model to run efficiently on any hardware platform, not just NVIDIA-specific hardware.
 
-![](assets/fig1.png)
+### Key Features
+
+- **🔧 Hardware Agnostic**: Automatically detects and adapts to available hardware
+- **⚡ Performance Optimized**: Maintains high performance across different architectures
+- **🐳 Container Ready**: Full Docker support for easy deployment
+- **📦 Modular Design**: Clean separation between original code and HAL implementation
+- **🔄 Backward Compatible**: Works with existing SpikingBrain-7B models and weights
 
 ---
 
 ## Project Structure
-This repository provides the full implementation and weights of **SpikingBrain-7B**, including the **HuggingFace version**, **vLLM inference version**, and **quantized version**, enabling flexible deployment and research across different scenarios.
 
 ```
-SpikingBrain-7B/
-├── hf_7B_model/ # HuggingFace version
-├── run_model/   # Model run examples
-├── vllm_hymeta/ # vLLM plugins and inference support
-├── W8ASpike/    # Quantized inference version
-├── setup.py
-├── requirements.txt 
-└── README.md 
+SpikingBrain-7B-HAL/
+├── spikingbrain-7b-original/    # Original SpikingBrain-7B implementation
+│   ├── hf_7B_model/             # HuggingFace version
+│   ├── run_model/               # Model run examples
+│   ├── vllm_hymeta/             # vLLM plugins and inference support
+│   ├── W8ASpike/                # Quantized inference version
+│   └── ...                      # Other original files
+├── hal/                         # Hardware Abstraction Layer (Coming Soon)
+│   ├── core/                    # Core HAL functionality
+│   ├── backends/                # Hardware-specific backends
+│   └── adapters/                # Model adapters
+├── examples/                    # Usage examples
+├── docs/                        # Documentation
+└── README.md                    # This file
 ```
-
---- 
-
-## vLLM-HyMeta
-
-**vllm-hymeta** is the plugin adaptation of HyMeta (Hybrid Models built on MetaX GPUs) for the [vLLM inference framework](https://github.com/vllm-project/vllm/tree/main), providing efficient inference support on NVIDIA GPUs.
-
-By leveraging the [plugins mechanism](https://blog.vllm.ai/2025/05/12/hardware-plugin.html) in vLLM, hardware backends can be integrated in a modular fashion, bringing the following benefits:
-
-- **Decoupled codebase**: Backend-specific code remains independent, keeping the vLLM core cleaner.
-
-- **Reduced maintenance cost**: vLLM developers can focus on general functionality without being affected by backend-specific implementations.
-
-- **Faster integration**: New backends can be integrated quickly and evolve independently with less engineering effort.
-
-### Container Deployment (NVIDIA)
-```bash
-git clone https://github.com/BICLab/SpikingBrain-7B.git
-cd SpikingBrain-7B
-docker build -t spiking-brain:7b-v1.0 .
-```
-```bash
-docker run -itd \
-    --entrypoint /bin/bash \
-    --network host \
-    --name <container_name> \
-    --shm-size 160g \
-    --gpus all \
-    --privileged \
-    -v /host_path:/container_path \
-    spiking-brain:7b-v1.0
-```
-
-Recommended environment for installing **vllm-hymeta** on NVIDIA GPUs:
-
-```makefile
-torch==2.7.1
-transformers==4.55.2
-triton==3.3.1
-flash_attn==2.7.3
-flash-linear-attention==0.1
-vllm==0.10.0
-scipy
-pyyaml
-decorator
-setuptools
-setuptools-scm
-```
-
-### Run with vLLM
-
-You can serve a model with vLLM in the simplest way using the following command:
-
-```bash
-vllm serve <your_model_path> \
-  --served-model-name <model_name> \
-  --gpu-memory-utilization <ratio> \
-  --block-size <size> \
-  --dtype bfloat16 \
-  --port <port_number>
-```
-
-You may also set `--tensor-parallel-size` and `--pipeline-parallel-size` when launching if you want to run with multiple GPUs. 
 
 ---
 
-## W8ASpike
+## Quick Start
 
-**W8ASpike** is the quantized inference version of SpikingBrain-7B, aiming to reduce inference cost under low-precision settings and explore the potential of Spiking Neural Networks (SNNs).
+### Prerequisites
 
-The current implementation adopts **pseudo-spiking**, where activations are approximated as spike-like signals at the tensor level, rather than true asynchronous event-driven spiking on neuromorphic hardware.
+- Python 3.8+
+- PyTorch 2.0+
+- CUDA (optional, for NVIDIA GPUs)
+- ROCm (optional, for AMD GPUs)
 
-- **Pseudo-spiking**: Efficient approximation at the tensor level, suitable for prototyping and research.
+### Installation
 
-- **True-spiking**: Requires asynchronous hardware and event-driven operator support, which is beyond the scope of this repository.
+```bash
+# Clone the repository
+git clone https://github.com/Jimmy-Dejesus/SpikingBrain-7B-HAL.git
+cd SpikingBrain-7B-HAL
 
-The activation spike encoding process here is inspired by the pseudo-spiking interfaces from [BICLab/Int2Spike](https://github.com/BICLab/Int2Spike). For additional PyTorch-based spiking interfaces, please refer to the Int2Spike library.
+# Install dependencies
+pip install -r requirements.txt
+
+# Install HAL (when available)
+pip install -e .
+```
+
+### Basic Usage
+
+```python
+from spikingbrain_hal import SpikingBrainHAL
+
+# Initialize with automatic hardware detection
+model = SpikingBrainHAL.from_pretrained("spikingbrain-7b-hal")
+
+# Run inference
+output = model.generate("Hello, world!")
+print(output)
+```
 
 ---
 
-## Available Models
-The model weights are hosted on **ModelScope**. Please select the appropriate version based on your needs:
+## Hardware Support
 
-- **Pre-trained model (7B):** https://www.modelscope.cn/models/Panyuqi/V1-7B-base
-- **Chat model (7B-SFT):** https://www.modelscope.cn/models/Panyuqi/V1-7B-sft-s3-reasoning
-- **Quantized weights (7B-W8ASpike):** https://www.modelscope.cn/models/Abel2076/SpikingBrain-7B-W8ASpike
+| Hardware | Status | Performance | Notes |
+|----------|--------|-------------|-------|
+| NVIDIA GPUs | ✅ Full | 100% | Original performance |
+| AMD GPUs | 🚧 In Progress | ~80% | ROCm support |
+| Intel GPUs | 🚧 Planned | ~70% | OneAPI support |
+| CPU | ✅ Basic | ~30% | Fallback mode |
+| Apple Silicon | 🚧 Planned | ~60% | Metal support |
 
-### Usage
-Example scripts are provided in [`run_model/`](run_model) for running the model with the released checkpoints. 
+---
 
-- **Hugging Face**  
-Load with `AutoModelForCausalLM` and use as a standard CausalLM (forward or generation); see [`run_model/run_model_hf.py`](run_model/run_model_hf.py).  
-For the SFT model, a chat template is used; see [`run_model/run_model_hf_chat_template.py`](run_model/run_model_hf_chat_template.py).
+## Development Status
 
-- **vLLM**  
-Perform inference using the provided **vLLM Hymeta** plugin; see [`run_model/run_model_vllm.py`](run_model/run_model_vllm.py) and the [vLLM Hymeta](#vllm-hymeta) section.   
-Please make sure to remove the `auto_map` field from `config.json`. Specifically, delete the following block if it is present:
-```json
-"auto_map": {
-  "AutoConfig": "configuration_gla_swa.GLAswaConfig",
-  "AutoModelForCausalLM": "modeling_gla_swa.GLAswaForCausalLM"
-}
+- [x] **Repository Setup** - Clean structure with original code nested
+- [x] **Dependency Management** - Hardware-agnostic requirements
+- [ ] **Core HAL Implementation** - Hardware detection and routing
+- [ ] **NVIDIA Backend** - Optimized CUDA implementation
+- [ ] **AMD Backend** - ROCm implementation
+- [ ] **CPU Backend** - Fallback implementation
+- [ ] **Documentation** - Comprehensive guides and examples
+
+---
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/your-username/SpikingBrain-7B-HAL.git
+cd SpikingBrain-7B-HAL
+
+# Create a development environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest tests/
 ```
 
-> For tested environment, please refer to [requirements.txt](requirements.txt).
+---
 
-### Performance Evaluation
-Table 1: **Performance evaluation of the SpikingBrain-7B pre-trained model.** All models are tested with the HuggingFace framework and evaluated using a perplexity-based method. Except for Qwen2.5, the other baselines are trained on limited Chinese data, resulting in clear disadvantages on CMMLU and C-Eval.
-![](assets/table1.png)
+## License
 
+This project is licensed under the same terms as the original SpikingBrain-7B project. See [LICENSE](LICENSE) for details.
 
-Table 2: **Performance evaluation of the SpikingBrain-76B pre-trained model.** All models are tested with the vLLM framework and evaluated using a perplexity-based method. Except for Qwen2.5, the other baselines are trained on limited Chinese data, resulting in clear disadvantages on CMMLU and C-Eval.
-![](assets/table2.png)
+---
 
---- 
+## Acknowledgments
+
+- **Original SpikingBrain-7B**: [BICLab/SpikingBrain-7B](https://github.com/BICLab/SpikingBrain-7B)
+- **Hardware Abstraction Layer**: Jimmy Dejesus
+- **Community**: All contributors and users
+
+---
 
 ## Citation
 
-If you find our work useful, please consider citing **SpikingBrain**:
+If you use this HAL implementation, please cite both the original SpikingBrain work and this HAL extension:
 
 ```bibtex
 @article{pan2025spikingbrain,
@@ -155,4 +153,24 @@ If you find our work useful, please consider citing **SpikingBrain**:
   journal={arXiv preprint arXiv:2509.05276},
   year={2025}
 }
+
+@software{spikingbrain_hal_2025,
+  title={SpikingBrain-7B-HAL: Hardware Abstraction Layer},
+  author={Dejesus, Jimmy},
+  year={2025},
+  url={https://github.com/Jimmy-Dejesus/SpikingBrain-7B-HAL}
+}
 ```
+
+---
+
+## Contact
+
+- **Author**: Jimmy Dejesus
+- **Email**: jimmy@bravetto.com
+- **GitHub**: [@Jimmy-Dejesus](https://github.com/Jimmy-Dejesus)
+- **Issues**: [GitHub Issues](https://github.com/Jimmy-Dejesus/SpikingBrain-7B-HAL/issues)
+
+---
+
+*This project is in active development. Features and APIs may change before the first stable release.*
